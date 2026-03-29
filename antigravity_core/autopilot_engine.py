@@ -37,6 +37,15 @@ def ciclo_diario():
     return True
 
 def main():
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        print(f"\n==================================================")
+        print(f">>> [NUBE] GITHUB ACTIONS DETECTADO - RUN SINGLE MODE")
+        print(f"==================================================")
+        
+        exito = ciclo_diario()
+        print("\n⚙️ El servidor gratuito de recolección en GitHub se ha apagado limpiamente tras el envío.")
+        sys.exit(0 if exito else 1)
+        
     ciclo_actual = 1
     while True:
         print(f"\n==================================================")

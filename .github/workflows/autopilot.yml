@@ -1,0 +1,38 @@
+name: OptimaFlow Autopilot V1 (Diario)
+
+on:
+  schedule:
+    # Corre todos los días a las 15:00 UTC (9:00 AM hora de México CST)
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+    # Permite correr el sistema manualmente con un botón desde la página web de GitHub
+
+jobs:
+  prospeccion_diaria:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Extraer código más reciente
+      uses: actions/checkout@v4
+      
+    - name: Preparar Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Instalar librerías e Inteligencia Artificial
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Arrancar Engine del Autopiloto (OptimaFlow)
+      env:
+        # Aquí conectamos tus llaves secretas seguras a variables de entorno para que el script pueda leerlas
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        # Nos movemos a la carpeta base
+        cd antigravity_core
+        # Ejecutamos el motor de ventas y esperamos a que el script dispare su magia
+        python autopilot_engine.py
