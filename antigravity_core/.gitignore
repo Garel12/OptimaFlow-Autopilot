@@ -1,0 +1,18 @@
+# Credentials
+.env
+.env.local
+credentials.json
+token.json
+
+# Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore dynamic scraped lists so we don't leak user data
+execution/leads_calificados.json
+top/MENSAJES_PROSPECCION.txt
+
+# Temp/debug
+.tmp/
+*.log

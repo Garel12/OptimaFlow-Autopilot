@@ -1,0 +1,16 @@
+# Proteccion de variables de entorno y Secretos (Obligatorio para la Nube)
+**/.env
+**/.env.local
+**/credentials.json
+**/token.json
+
+# Archivos de caché
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Archivos de Operación Dinámicos (Datos Sensibles de Clientes)
+**/execution/leads_calificados.json
+**/top/MENSAJES_PROSPECCION.txt
+**/*.log
+**/.tmp/

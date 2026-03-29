@@ -1,0 +1,78 @@
+{
+  "_comentario": "OptimaFlow V1 — Archivo de Configuración White Label. Editar este archivo para adaptar el sistema a cualquier cliente.",
+  "cliente": "Prueba Prosche GT3 rs",
+  "spreadsheet_id": "https://docs.google.com/spreadsheets/d/1yRwY5cyNSyjGveMfUMAQofo3aW2tVGfsOe1ZFHwPbYo/edit?usp=sharing",
+  "sheets": {
+    "inventario": "INVENTARIO",
+    "ventas": "VENTAS"
+  },
+  "columns": {
+    "inventario": {
+      "producto": "Producto",
+      "stock": "Stock",
+      "precio": "Precio"
+    },
+    "ventas": {
+      "fecha": "Fecha",
+      "producto": "Producto",
+      "cantidad": "Cantidad",
+      "total": "Total"
+    }
+  },
+  "sandbox": {
+    "enabled": true,
+    "inventario": [
+      {
+        "Producto": "Mezcal Artesanal",
+        "Stock": "120",
+        "Precio": "450.50"
+      },
+      {
+        "Producto": "Tequila Reposado",
+        "Stock": "",
+        "Precio": "320"
+      },
+      {
+        "Producto": "Cerveza Artesanal",
+        "Stock": "55",
+        "Precio": null
+      },
+      {
+        "Producto": "Vino Tinto",
+        "Stock": "30",
+        "Precio": "180.00"
+      },
+      {
+        "Producto": "Ron Añejo",
+        "Stock": null,
+        "Precio": "275.99"
+      }
+    ],
+    "ventas": [
+      {
+        "Fecha": "2026-03-01",
+        "Producto": "Mezcal Artesanal",
+        "Cantidad": "10",
+        "Total": "4505.00"
+      },
+      {
+        "Fecha": "2026-03-02",
+        "Producto": "Tequila Reposado",
+        "Cantidad": "",
+        "Total": "960"
+      },
+      {
+        "Fecha": "2026-03-03",
+        "Producto": "Cerveza Artesanal",
+        "Cantidad": "20",
+        "Total": null
+      },
+      {
+        "Fecha": "2026-03-04",
+        "Producto": "Vino Tinto",
+        "Cantidad": "5",
+        "Total": "900.00"
+      }
+    ]
+  }
+}

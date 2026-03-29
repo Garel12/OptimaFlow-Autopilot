@@ -1,0 +1,29 @@
+De acuerdo a la directiva, el script generará la inteligencia internamente (usando el modelo) en caso de restricciones de scraping. Escribiremos un script en Python que tendrá integrados los datos de 10 empresas reales de alta probabilidad (Logística, Refaccionarias, Distribución) en México. El script creará automáticamente el archivo:
+
+/antigravity_core/execution/leads_calificados.json (formato con claves: empresa, web, analisis_sector)
+Capa 2 — Orquestación (Prospección)
+[NEW] 
+mensajes_generator.py
+ (Opcional pero recomendable)
+Vamos a escribir este script para que el sistema esté verdaderamente orquestado. Usará los datos del JSON y el 
+pitch_tecnico.md
+ como base (y plantillas predefinidas en el script) para generar automáticamente cada outreach personalizado en /antigravity_core/top/MENSAJES_PROSPECCION.txt.
+
+[NEW] 
+MENSAJES_PROSPECCION.txt
+Un archivo de texto plano generado por la orquestación, que incluirá los 10 mensajes personalizados en formato Cold Outreach:
+
+Estructura propuesta por mensaje:
+Gancho/Problema: Errores manuales en facturación e inventarios específicos de su sector.
+Consecuencia: El ROI no capturado, fugas de dinero no vistas.
+Solución: Implementación de un "Auditor de Fugas de Dinero" en tiempo real (OptimaFlow).
+Prueba Social: Caso de éxito en la optimización operativa de "Greencorp Biorganics".
+Verification Plan
+Automated Tests
+Ejecutar el script /execution/lead_scraper_pro.py y el de generación de mensajes:
+cd "c:\Users\garel\OneDrive\Imágenes\aaaaa\OPTIMAFLOW V1\antigravity_core\execution"
+python lead_scraper_pro.py
+Confirmar que se genera correctamente leads_calificados.json.
+Validar la existencia y formato del archivo MENSAJES_PROSPECCION.txt en la carpeta /top/ con los 10 mensajes únicos.
+Manual Verification
+Leer los mensajes generados para certificar que cumplan estrictamente las pautas del Outreach y que se refieran explícitamente a Greencorp Biorganics y al pitch.

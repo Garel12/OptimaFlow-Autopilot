@@ -1,0 +1,40 @@
+============================================================
+ ALERTA URGENTE | OPTIMAFLOW V1 | GreenCorp
+ Generado: 2026-03-08T19:35:56
+============================================================
+
+*REPORTE DE ANOMALIAS CRITICAS* | 5 problemas detectados
+Estimado Jefe de Almacen,
+El sistema OPTIMAFLOW detecto las siguientes irregularidades
+que requieren accion INMEDIATA:
+
+*[1] QUIEBRES DE STOCK* (2 productos):
+  1. [!] *Tequila Reposado*
+     -> Stock actual: 0 unidades
+     -> Stock = 0 en catalogo activo (precio: $320.0).
+     -> ACCION: Revisar reorder point y contactar proveedor HOY.
+  2. [!] *Ron Anejo*
+     -> Stock actual: 0 unidades
+     -> Stock = 0 en catalogo activo (precio: $275.99).
+     -> ACCION: Revisar reorder point y contactar proveedor HOY.
+
+*[2] FUGAS DE DINERO* (2 registros):
+  1. [!!] *Cerveza Artesanal* (INVENTARIO)
+     -> Producto 'Cerveza Artesanal' con Precio=$0.00 en inventario. Cualquier venta genera perdida contable.
+     -> ACCION: Auditar con Contabilidad, corregir precio/registro.
+  2. [!!] *Tequila Reposado* (VENTAS)
+     -> Venta del 2026-03-02: Cantidad=0 unidades pero Total=$960.0. Cargo sin despacho fisico.
+     -> ACCION: Auditar con Contabilidad, corregir precio/registro.
+
+*[3] VENTAS INCONSISTENTES* (1 registros):
+  1. [!] *Cerveza Artesanal* | 2026-03-03
+     -> Venta del 2026-03-03: 20 unidades despachadas con Total=$0.00. Posible venta no registrada.
+     -> ACCION: Verificar ticket de caja y registro en ERP.
+
+------------------------------------------------------------
+Severidad CRITICA = accion en las proximas 2 horas.
+Severidad ALTA    = accion antes de cierre de dia.
+
+Este mensaje fue generado automaticamente por OPTIMAFLOW V1.
+Para desactivar alertas, contacta al equipo de sistemas.
+============================================================

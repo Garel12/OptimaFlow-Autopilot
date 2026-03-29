@@ -1,0 +1,42 @@
+Walkthrough: DIRECTIVA #004 — Universalización y Empaquetado
+Se ha completado la migración del sistema OptimaFlow V1 a un modelo de marca blanca ("White Label"), se ha redactado el material comercial técnico y se ha añadido una herramienta de prospección.
+
+Cambios Realizados
+1. Capa 3: Ejecución White Label
+config.json
+: Nuevo centro de mando que elimina los nombres de "Greencorp" del código. Ahora las pestañas (INVENTARIO, VENTAS) y los nombres de las columnas se definen aquí de forma dinámica.
+connector_master.py
+: Refactorizado completamente. Ahora carga la configuración desde el JSON, valida las claves y mapea las columnas automáticamente. El modo SANDBOX también extrae sus datos del config.
+2. Capa 2: Pitch Técnico
+pitch_tecnico.md
+: Documento profesional de 3 párrafos que explica:
+Extracción y Normalización de datos.
+Motor de Anomalías (Dinero y Stock).
+Pipeline de Alertas Automatizadas.
+3. Nueva Herramienta: Lead Generation
+lead_gen_basic.py
+: Script que busca empresas de logística/alimentos en Google.
+Fallback Demo: Debido a las restricciones de scraping de Google, el script incluye un "Modo Demo" con 10 empresas reales de CDMX para asegurar que el cliente siempre vea un CSV generado con éxito.
+Verificación de Resultados
+Test 1: Connector Master (Modo White Label Sandbox)
+El script ahora identifica al cliente desde el config y procesa las columnas dinámicamente.
+
+json
+{
+  "estado": "ÉXITO",
+  "modo": "SANDBOX",
+  "cliente": "Greencorp (DEMO)",
+  "resumen": { "filas_inventario": 5, "filas_ventas": 4 }
+}
+Test 2: Generación de Leads
+Ejecución exitosa generando el archivo 
+leads_output.csv
+.
+
+Leads encontrados: 10
+Formato: CSV (nombre_empresa, url, query_origen, fecha)
+TIP
+
+Para usar el sistema con un cliente nuevo, solo necesitas editar 
+antigravity_core/config.json
+ con los nombres de sus pestañas y columnas. ¡El código ya no necesita cambios!

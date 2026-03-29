@@ -1,0 +1,74 @@
+# DIRECTIVA #004 — Plan de Implementación
+
+Convertir OptimaFlow V1 en una herramienta "White Label" reutilizable por cualquier cliente,
+crear material de ventas técnico, y añadir una herramienta de generación de leads.
+
+---
+
+## Proposed Changes
+
+### Capa 3 — Capa de Ejecución (White Label)
+
+#### [NEW] [config.json](file:///c:/Users/garel/OneDrive/Imágenes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/config.json)
+
+Nuevo archivo de configuración que reemplaza los valores hardcodeados de Greencorp.
+Contendrá:
+- `spreadsheet_id`: ID del Google Sheet del cliente
+- [sheets](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py#109-129): objeto con claves lógicas ([inventario](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py#83-93), [ventas](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py#95-106)) → nombre real de la pestaña
+- `columns`: mapeo de columnas por hoja (producto, stock, precio, fecha, cantidad, total)
+- `sandbox_data`: datos ficticios de ejemplo para modo SANDBOX
+
+#### [MODIFY] [connector_master.py](file:///c:/Users/garel/OneDrive/Imágenes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py)
+
+- Cargar `config.json` al inicio (función `load_config()`)
+- [fetch_from_sheets()](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py#109-129) usará `config["sheets"]["inventario"]` y `config["sheets"]["ventas"]` en lugar de strings literales
+- [clean_inventario()](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py#83-93) y [clean_ventas()](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/connector_master.py#95-106) recibirán el mapeo de columnas desde config
+- Los datos Sandbox también se moverán a `config.json` (eliminando las constantes hardcodeadas del [.py](file:///c:/Users/garel/OneDrive/Im%C3%A1genes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/notifier_basic.py))
+- Se añade validación del config con mensajes de error descriptivos
+
+---
+
+### Capa 2 — Material de Orquestación
+
+#### [NEW] [pitch_tecnico.md](file:///c:/Users/garel/OneDrive/Imágenes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/pitch_tecnico.md)
+
+Documento de 3 párrafos en español para presentar a un cliente externo. Explicará:
+1. **Qué hace el sistema**: conexión automatizada a datos operativos
+2. **Cómo detecta inconsistencias**: motor de anomalías (QUIEBRE_STOCK, FUGA_DINERO, INCONSISTENCIA)
+3. **Cómo entrega alertas**: pipeline automático de notificación
+
+---
+
+### Nueva Herramienta — Lead Generation
+
+#### [NEW] [lead_gen_basic.py](file:///c:/Users/garel/OneDrive/Imágenes/aaaaa/OPTIMAFLOW%20V1/antigravity_core/execution/lead_gen_basic.py)
+
+Script simple que:
+- Usa `googlesearch-python` para buscar empresas de "Distribución de Alimentos" o "Logística"
+- Extrae hasta 10 resultados (nombre de empresa + URL)
+- Guarda en `/antigravity_core/execution/leads_output.csv`
+- Tiene manejo de errores por si la librería no está instalada
+
+---
+
+## Verification Plan
+
+### Automated Tests (run_command)
+
+1. **Validar connector_master.py con nuevo config.json** (modo SANDBOX):
+```
+cd "c:\Users\garel\OneDrive\Imágenes\aaaaa\OPTIMAFLOW V1\antigravity_core\execution"
+python connector_master.py
+```
+✅ Éxito si imprime JSON con `"estado": "ÉXITO"` y no hay errores de importación.
+
+2. **Instalar dependencia y ejecutar lead_gen_basic.py**:
+```
+pip install googlesearch-python
+python lead_gen_basic.py
+```
+✅ Éxito si se crea `leads_output.csv` con al menos 5 filas.
+
+### Manual Verification
+- Abrir `config.json` y cambiar el `sheet_name` de `"INVENTARIO"` a `"Inventario_Test"` → al re-ejecutar en modo live debería buscar esa pestaña
+- Revisar que `pitch_tecnico.md` sea legible y profesional

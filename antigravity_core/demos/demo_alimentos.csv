@@ -1,0 +1,4 @@
+﻿Lote,SKU,Stock,Vendido,Precio_Lista,Precio_Vendido,Margen
+ALM-101,Leche Entera 1L,500,100,28.0,28.0,15%
+ALM-102,Yogurt Natural,50,50,15.0,1.5,-85%
+ALM-103,Queso Panela,0,20,55.0,55.0,20%

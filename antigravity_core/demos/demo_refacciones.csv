@@ -1,0 +1,5 @@
+﻿ID,Producto,Stock,Vendido,Precio_Unitario,Total_Facturado
+RFX-101,Batería LTH 47,15,2,1850.0,3700.0
+RFX-102,Balatas Delanteras,4,6,450.0,2700.0
+RFX-103,Bujía Platino,120,10,2.5,25.0
+RFX-104,Aceite Sintético,30,5,550.0,0.0

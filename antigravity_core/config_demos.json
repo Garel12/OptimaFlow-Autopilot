@@ -1,0 +1,38 @@
+{
+    "MODO_ACTUAL": "DEMO_REFACCIONES",
+    "PERFILES": {
+        "DEMO_REFACCIONES": {
+            "sector": "Refacciones Automotrices",
+            "archivo": "demos/demo_refacciones.csv",
+            "columnas_analisis": [
+                "Producto",
+                "Stock",
+                "Vendido",
+                "Precio_Unitario",
+                "Total_Facturado"
+            ]
+        },
+        "DEMO_LOGISTICA": {
+            "sector": "Logística y CEDIS",
+            "archivo": "demos/demo_logistica.csv",
+            "columnas_analisis": [
+                "Carga",
+                "Cant_Despachada",
+                "Cant_Facturada",
+                "Precio_Unidad",
+                "Total"
+            ]
+        },
+        "DEMO_ALIMENTOS": {
+            "sector": "Distribución de Alimentos",
+            "archivo": "demos/demo_alimentos.csv",
+            "columnas_analisis": [
+                "SKU",
+                "Stock",
+                "Vendido",
+                "Precio_Lista",
+                "Precio_Vendido"
+            ]
+        }
+    }
+}
