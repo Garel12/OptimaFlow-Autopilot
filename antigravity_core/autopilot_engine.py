@@ -2,6 +2,7 @@ import time
 import subprocess
 import os
 import sys
+from pathlib import Path
 
 def ciclo_diario():
     print("==================================================")

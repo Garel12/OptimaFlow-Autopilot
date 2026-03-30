@@ -52,7 +52,7 @@ def discover_leads_with_ia(query):
         return []
 
     genai.configure(api_key=api_key)
-    # Usamos 1.5 flash que suele ser más estable para la capa gratuita en servidores cloud
+    # Usamos identificador estándar compatible
     model = genai.GenerativeModel('gemini-1.5-flash')
 
     prompt = f"""
