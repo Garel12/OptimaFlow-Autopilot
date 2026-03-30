@@ -88,12 +88,33 @@ def discover_leads_with_ia(query):
 
     try:
         model = genai.GenerativeModel(target_model)
-        for intento in range(3):
+        for intento in range(2):
             try:
                 response = model.generate_content(prompt)
-                content = response.text.replace("```json", "").replace("```", "").strip()
-                data = json.loads(content)
-                if data: return data
+                full_text = response.text.strip()
+                
+                # 🛠️ EXTRACCIÓN ROBUSTA DE JSON (Incluso si hay texto basura alrededor)
+                data = None
+                
+                # Intento 1: Limpieza básica de markdown
+                json_clean = full_text.replace("```json", "").replace("```", "").strip()
+                try:
+                    data = json.loads(json_clean)
+                except:
+                    # Intento 2: Buscar el primer '[' y el último ']' con Regex
+                    import re
+                    match = re.search(r'\[.*\]', json_clean, re.DOTALL)
+                    if match:
+                        try:
+                            data = json.loads(match.group())
+                        except: pass
+                
+                if data and isinstance(data, list):
+                    log.info(f"    ✅ Se extrajeron {len(data)} prospectos exitosamente.")
+                    return data
+                else:
+                    log.warning(f"    ⚠️ Respuesta de {target_model} no es un JSON válido. Reintentando...")
+                    time.sleep(5)
             except Exception as e:
                 if "429" in str(e):
                     log.warning(f"⚠️ Cuota excedida (429). Reintentando en 35s...")
