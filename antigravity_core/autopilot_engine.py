@@ -18,6 +18,12 @@ def ciclo_diario():
         return False
 
     print("\n[PASO 2] Redactando correos ultra-personalizados con Inteligencia Artificial...")
+    # Verificamos si el paso anterior generó prospectos reales para no romper el programa
+    path_leads = Path(__file__).resolve().parent / "execution" / "leads_calificados.json"
+    if not path_leads.exists():
+        print(f"\n⚠️ [AVISO] No se encontraron prospectos calificados hoy. El motor entrará en hibernación.")
+        return False
+
     try:
         subprocess.run([sys.executable, "execution/mensajes_generator.py"], cwd=base_dir, check=True)
     except subprocess.CalledProcessError:

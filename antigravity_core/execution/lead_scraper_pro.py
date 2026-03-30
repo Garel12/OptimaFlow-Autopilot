@@ -10,6 +10,7 @@ import requests
 import google.generativeai as genai
 import urllib3
 import os
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,7 +30,7 @@ def extraer_dominio_base(url):
     """Extrae el dominio raiz puro para no repetir subpaginas similares."""
     try:
         from urllib.parse import urlparse
-        dom = urlparse(url).netloc.replace("www.", "")
+        dom = urlparse(url).netloc.lower().replace("www.", "")
         return dom.split('/')[0]
     except:
         return url
@@ -44,37 +45,46 @@ def load_memoria():
     return []
 
 def discover_leads_with_ia(query):
-    """Usa a Gemini para encontrar negocios reales y saltarse los bloqueos de Google Search."""
+    """Usa a Gemini para encontrar negocios reales. Incluye lógica de reintentos para evadir errores 429."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         log.error("❌ No hay GEMINI_API_KEY para discovery.")
         return []
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash')
+    # Usamos 1.5 flash que suele ser más estable para la capa gratuita en servidores cloud
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
     prompt = f"""
-    Eres un experto en investigación de mercado. 
+    Eres un experto en investigación de mercado y prospección B2B. 
     Proporciona una lista de 15 negocios REALES y EXISTENTES que coincidan con esta búsqueda: '{query}'.
-    Debes devolver un formato JSON puro (una lista de objetos) con estos campos: 
-    - nombre: Nombre del negocio.
-    - web: URL de su sitio oficial (debe ser el sitio real, no redes sociales).
-    - sector: Breve descripción de que hacen.
+    Tu respuesta debe ser estrictamente un JSON (una lista de objetos) con estos campos: 
+    - nombre: Nombre comercial.
+    - web: URL oficial del sitio web (DEBE ser el sitio real, no perfiles de redes sociales).
+    - sector: Qué ofrecen o su especialidad.
 
-    IMPORTANTE: 
-    - Solo negocios reales de la zona geográfica mencionada.
-    - NO incluyas bloques de código markdown, solo el JSON.
-    - Prioriza negocios que sepas que tienen sitio web propio.
+    REGLAS: 
+    - Solo negocios reales de la zona mencionada.
+    - NO incluyas bloques de código markdown (```json), SOLO el JSON crudo.
+    - El formato debe ser válido para json.loads().
     """
 
-    try:
-        response = model.generate_content(prompt)
-        content = response.text.replace("```json", "").replace("```", "").strip()
-        data = json.loads(content)
-        return data
-    except Exception as e:
-        log.error(f"❌ Error en Gemini Discovery: {e}")
-        return []
+    for intento in range(3):
+        try:
+            log.info(f"    [Discovery] Intento #{intento+1} con Gemini...")
+            response = model.generate_content(prompt)
+            content = response.text.replace("```json", "").replace("```", "").strip()
+            data = json.loads(content)
+            return data
+        except Exception as e:
+            if "429" in str(e):
+                espera = (intento + 1) * 35 # Esperamos los 35 segundos que pide Google
+                log.warning(f"⚠️ Cuota excedida (429). Esperando {espera} segundos para reintentar...")
+                time.sleep(espera)
+            else:
+                log.error(f"❌ Error inesperado en Discovery: {e}")
+                break
+    return []
 
 def save_memoria(memoria):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
