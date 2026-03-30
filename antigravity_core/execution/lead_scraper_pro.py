@@ -45,45 +45,53 @@ def load_memoria():
     return []
 
 def discover_leads_with_ia(query):
-    """Usa a Gemini para encontrar negocios reales. Incluye lógica de reintentos para evadir errores 429."""
+    """Usa a Gemini para encontrar negocios reales. Incluye multi-modelo fallback para evitar errores 404."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         log.error("❌ No hay GEMINI_API_KEY para discovery.")
         return []
 
     genai.configure(api_key=api_key)
-    # Usamos identificador estándar compatible
-    model = genai.GenerativeModel('gemini-1.5-flash')
-
+    
+    # Lista de modelos a probar por si Google cambia la nomenclatura en la API gratuita
+    modelos_a_probar = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro']
+    
     prompt = f"""
     Eres un experto en investigación de mercado y prospección B2B. 
-    Proporciona una lista de 15 negocios REALES y EXISTENTES que coincidan con esta búsqueda: '{query}'.
-    Tu respuesta debe ser estrictamente un JSON (una lista de objetos) con estos campos: 
+    Proporciona una lista de 10 negocios REALES y EXISTENTES en Saltillo que coincidan con: '{query}'.
+    Tu respuesta debe ser estrictamente un JSON (una lista de objetos) con: 
     - nombre: Nombre comercial.
-    - web: URL oficial del sitio web (DEBE ser el sitio real, no perfiles de redes sociales).
-    - sector: Qué ofrecen o su especialidad.
-
-    REGLAS: 
-    - Solo negocios reales de la zona mencionada.
-    - NO incluyas bloques de código markdown (```json), SOLO el JSON crudo.
-    - El formato debe ser válido para json.loads().
+    - web: URL oficial (NO redes sociales).
+    - sector: Especialidad.
     """
 
-    for intento in range(3):
+    for nombre_modelo in modelos_a_probar:
         try:
-            log.info(f"    [Discovery] Intento #{intento+1} con Gemini...")
+            log.info(f"    [Discovery] Intentando con modelo: {nombre_modelo}...")
+            model = genai.GenerativeModel(nombre_modelo)
             response = model.generate_content(prompt)
             content = response.text.replace("```json", "").replace("```", "").strip()
             data = json.loads(content)
-            return data
+            if data:
+                log.info(f"    ✅ Modelo {nombre_modelo} funcionó correctamente.")
+                return data
         except Exception as e:
-            if "429" in str(e):
-                espera = (intento + 1) * 35 # Esperamos los 35 segundos que pide Google
-                log.warning(f"⚠️ Cuota excedida (429). Esperando {espera} segundos para reintentar...")
-                time.sleep(espera)
+            msg = str(e)
+            if "404" in msg:
+                log.warning(f"    ⚠️ Modelo {nombre_modelo} no encontrado (404). Saltando al siguiente...")
+                continue
+            elif "429" in msg:
+                log.warning(f"    ⚠️ Cuota excedida para {nombre_modelo}. Esperando 40s...")
+                time.sleep(40)
+                # Reintentamos con el mismo una vez más
+                try: 
+                    response = model.generate_content(prompt)
+                    return json.loads(response.text.replace("```json", "").replace("```", "").strip())
+                except: continue
             else:
-                log.error(f"❌ Error inesperado en Discovery: {e}")
-                break
+                log.error(f"    ❌ Error con {nombre_modelo}: {e}")
+                continue
+    
     return []
 
 def save_memoria(memoria):
