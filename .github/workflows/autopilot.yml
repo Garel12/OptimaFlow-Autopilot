@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
     # Permite correr el sistema manualmente con un botón desde la página web de GitHub
 
+# Damos permiso explícito para que el robot pueda sobreescribir el repositorio y mantener la memoria
+permissions:
+  contents: write
+
 jobs:
   prospeccion_diaria:
     runs-on: ubuntu-latest
@@ -36,3 +40,12 @@ jobs:
         cd antigravity_core
         # Ejecutamos el motor de ventas y esperamos a que el script dispare su magia
         python autopilot_engine.py
+
+    - name: Commit y Push del cerebro (Memoria Semántica de Correos Enviados)
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "OptimaFlow Auto Bot"
+        git add antigravity_core/data/sent_domains.json
+        # Solo hacemos commit si el archivo de memoria tuvo cambios
+        git commit -m "🤖 Memoria Actualizada: Nuevos prospectos registrados [skip ci]" || echo "No hay prospectos nuevos en memoria hoy"
+        git push
