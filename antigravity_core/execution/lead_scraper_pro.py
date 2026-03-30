@@ -45,7 +45,7 @@ def load_memoria():
     return []
 
 def discover_leads_with_ia(query):
-    """Usa a Gemini para encontrar negocios reales. Incluye multi-modelo fallback para evitar errores 404."""
+    """Usa a Gemini para encontrar negocios reales. Lista modelos disponibles para evadir el 404."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         log.error("❌ No hay GEMINI_API_KEY para discovery.")
@@ -53,44 +53,54 @@ def discover_leads_with_ia(query):
 
     genai.configure(api_key=api_key)
     
-    # Lista de modelos a probar por si Google cambia la nomenclatura en la API gratuita
-    modelos_a_probar = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro']
+    # 🕵️‍♂️ AUTO-DETECCIÓN DE MODELOS (Bypass 404 Universal)
+    target_model = None
+    try:
+        log.info("🔍 Escaneando modelos disponibles en tu cuenta de Google...")
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                # Priorizamos flash para velocidad
+                if 'flash' in m.name.lower():
+                    target_model = m.name
+                    break
+        
+        # Si no encontramos uno con 'flash', tomamos el primero que genere contenido
+        if not target_model:
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    target_model = m.name
+                    break
+    except Exception as e:
+        log.warning(f"⚠️ No pude listar modelos: {e}. Usando fallback gemini-1.5-flash.")
+        target_model = 'models/gemini-1.5-flash'
+
+    if not target_model:
+        log.error("❌ No se encontró ningún modelo compatible en tu cuenta de Google.")
+        return []
+
+    log.info(f"🚀 Usando modelo detectado: {target_model}")
     
     prompt = f"""
-    Eres un experto en investigación de mercado y prospección B2B. 
-    Proporciona una lista de 10 negocios REALES y EXISTENTES en Saltillo que coincidan con: '{query}'.
-    Tu respuesta debe ser estrictamente un JSON (una lista de objetos) con: 
-    - nombre: Nombre comercial.
-    - web: URL oficial (NO redes sociales).
-    - sector: Especialidad.
+    Eres un experto en investigación de mercado. 
+    Proporciona una lista JSON de 10 negocios REALES en Saltillo para la búsqueda: '{query}'.
+    JSON: [{{ "nombre": "", "web": "URL_REAL", "sector": "" }}]
     """
 
-    for nombre_modelo in modelos_a_probar:
-        try:
-            log.info(f"    [Discovery] Intentando con modelo: {nombre_modelo}...")
-            model = genai.GenerativeModel(nombre_modelo)
-            response = model.generate_content(prompt)
-            content = response.text.replace("```json", "").replace("```", "").strip()
-            data = json.loads(content)
-            if data:
-                log.info(f"    ✅ Modelo {nombre_modelo} funcionó correctamente.")
-                return data
-        except Exception as e:
-            msg = str(e)
-            if "404" in msg:
-                log.warning(f"    ⚠️ Modelo {nombre_modelo} no encontrado (404). Saltando al siguiente...")
-                continue
-            elif "429" in msg:
-                log.warning(f"    ⚠️ Cuota excedida para {nombre_modelo}. Esperando 40s...")
-                time.sleep(40)
-                # Reintentamos con el mismo una vez más
-                try: 
-                    response = model.generate_content(prompt)
-                    return json.loads(response.text.replace("```json", "").replace("```", "").strip())
-                except: continue
-            else:
-                log.error(f"    ❌ Error con {nombre_modelo}: {e}")
-                continue
+    try:
+        model = genai.GenerativeModel(target_model)
+        for intento in range(3):
+            try:
+                response = model.generate_content(prompt)
+                content = response.text.replace("```json", "").replace("```", "").strip()
+                data = json.loads(content)
+                if data: return data
+            except Exception as e:
+                if "429" in str(e):
+                    log.warning(f"⚠️ Cuota excedida (429). Reintentando en 35s...")
+                    time.sleep(35)
+                else: raise e
+    except Exception as e:
+        log.error(f"❌ Error fatal en Discovery ({target_model}): {e}")
     
     return []
 
