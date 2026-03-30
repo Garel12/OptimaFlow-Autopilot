@@ -26,12 +26,35 @@ load_dotenv(dotenv_path=ENV_PATH)
 
 def init_gemini():
     api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key or api_key == "tu-api-key-de-gemini-aqui":
+    if not api_key:
         log.error("Falta GEMINI_API_KEY en el archivo .env")
         sys.exit(1)
     genai.configure(api_key=api_key)
-    # Recomendado modelo flash para velocidad y bajo costo
-    return genai.GenerativeModel('gemini-1.5-flash')
+    
+    # 🕵️‍♂️ AUTO-DETECCIÓN DE MODELOS (Bypass 404 Universal)
+    target_model = None
+    try:
+        log.info("🔍 Escaneando modelos para Redacción de Correos...")
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                if 'flash' in m.name.lower():
+                    target_model = m.name
+                    break
+        if not target_model:
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    target_model = m.name
+                    break
+    except Exception as e:
+        log.warning(f"⚠️ No pude listar modelos: {e}. Usando fallback gemini-1.5-flash.")
+        target_model = 'models/gemini-1.5-flash'
+
+    if not target_model:
+        log.error("❌ No se encontró ningún modelo compatible.")
+        sys.exit(1)
+
+    log.info(f"🚀 Redactando con modelo detectado: {target_model}")
+    return genai.GenerativeModel(target_model)
 
 def generar_correo_con_ia(modelo, empresa, web, analisis):
     prompt = f"""
