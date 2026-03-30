@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 import requests
-from duckduckgo_search import DDGS
+from googlesearch import search
 import urllib3
 
 urllib3.disable_warnings()
@@ -89,48 +89,40 @@ def main():
     query = random.choice(consultas)
     log.info(f"🔍 Lanzando sondas de rastreo con query: '{query}'...")
 
-    # 3. Buscar prospectos en vivo gratis
-    resultados_crudos = []
-    try:
-        resultados = DDGS().text(query, max_results=40)
-        for r in resultados:
-            resultados_crudos.append(r)
-    except Exception as e:
-        log.error(f"❌ Error en DuckDuckGo: {e}")
-        sys.exit(1)
-
-    log.info(f"📡 Se detectaron {len(resultados_crudos)} resultados potenciales. Analizando y descartando duplicados...")
+    # 3. Buscar prospectos en vivo gratis vía Google
+    log.info(f"📡 Buscando en Google. Parseando resultados...")
 
     leads_frescos = []
-    cuota_maxima = 20 # Solo enviar a un máximo de 20 para no caer en SPAM
+    cuota_maxima = 10 # Bajamos a 10 para hacer la búsqueda más rápida y no alertar a Google
+    
+    try:
+        # Obtenemos las primeras 30 URLs de Google
+        resultados = search(query, num_results=30, lang="es")
+    except Exception as e:
+        log.error(f"❌ Error en Google Search: {e}")
+        sys.exit(1)
 
-    for res in resultados_crudos:
+    for url_prospecto in resultados:
         if len(leads_frescos) >= cuota_maxima:
             break
-
-        url_prospecto = res.get('href', '')
-        nombre_prospecto = res.get('title', 'Empresa Automotriz').split('-')[0].split('|')[0].strip()
-        
+            
         # Filtramos directorios inservibles
-        if any(d in url_prospecto.lower() for d in ['facebook', 'instagram', 'yelp', 'seccionamarilla', 'foursquare']):
+        if any(d in url_prospecto.lower() for d in ['facebook', 'instagram', 'yelp', 'seccionamarilla', 'foursquare', 'tiktok', 'youtube', 'mercadolibre']):
             continue
 
         dominio_puro = extraer_dominio_base(url_prospecto)
+        nombre_prospecto = dominio_puro.capitalize()
         
-        # Evitar repetir envíos a los mismos clientes de días pasados
+        # Evitar repetir envíos
         if dominio_puro in memoria_dominios:
             continue
 
-        log.info(f"  [+] Extrayendo contacto de: {nombre_prospecto} ({dominio_puro})")
+        log.info(f"  [+] Extrayendo contacto de: {nombre_prospecto} ({url_prospecto})")
         correo_encontrado = scrape_email_from_web(url_prospecto)
 
         if correo_encontrado:
-            # ¡Prospecto de Oro!
             log.info(f"      🎯 ¡CORREO CONFIRMADO!: {correo_encontrado}")
-            
-            # Anotarlo en la memoria para que mañana NO se le repita
             memoria_dominios.append(dominio_puro)
-            
             leads_frescos.append({
                 "empresa": nombre_prospecto,
                 "web": url_prospecto,
@@ -138,7 +130,6 @@ def main():
                 "email": correo_encontrado
             })
         else:
-            # Los que pasaron este filtro se añaden también a la memoria para no perder tiempo escanéandolos mañana porque ya sabemos que no tienen correo.
             memoria_dominios.append(dominio_puro)
 
     # 4. Guardar resultados y memoria para el Dispatcher
