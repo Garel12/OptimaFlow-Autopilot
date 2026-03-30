@@ -7,9 +7,12 @@ from pathlib import Path
 from datetime import datetime
 import re
 import requests
-from googlesearch import search
+import google.generativeai as genai
 import urllib3
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 urllib3.disable_warnings()
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -39,6 +42,39 @@ def load_memoria():
             except:
                 return []
     return []
+
+def discover_leads_with_ia(query):
+    """Usa a Gemini para encontrar negocios reales y saltarse los bloqueos de Google Search."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        log.error("❌ No hay GEMINI_API_KEY para discovery.")
+        return []
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.0-flash')
+
+    prompt = f"""
+    Eres un experto en investigación de mercado. 
+    Proporciona una lista de 15 negocios REALES y EXISTENTES que coincidan con esta búsqueda: '{query}'.
+    Debes devolver un formato JSON puro (una lista de objetos) con estos campos: 
+    - nombre: Nombre del negocio.
+    - web: URL de su sitio oficial (debe ser el sitio real, no redes sociales).
+    - sector: Breve descripción de que hacen.
+
+    IMPORTANTE: 
+    - Solo negocios reales de la zona geográfica mencionada.
+    - NO incluyas bloques de código markdown, solo el JSON.
+    - Prioriza negocios que sepas que tienen sitio web propio.
+    """
+
+    try:
+        response = model.generate_content(prompt)
+        content = response.text.replace("```json", "").replace("```", "").strip()
+        data = json.loads(content)
+        return data
+    except Exception as e:
+        log.error(f"❌ Error en Gemini Discovery: {e}")
+        return []
 
 def save_memoria(memoria):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -89,35 +125,39 @@ def main():
     query = random.choice(consultas)
     log.info(f"🔍 Lanzando sondas de rastreo con query: '{query}'...")
 
-    # 3. Buscar prospectos en vivo gratis vía Google
-    log.info(f"📡 Buscando en Google. Parseando resultados...")
+    # 3. Descubrir prospectos usando el cerebro de la IA (Resistente a bloqueos)
+    log.info(f"📡 Iniciando IA-Discovery para evadir bloqueos de red...")
 
     leads_frescos = []
-    cuota_maxima = 10 # Bajamos a 10 para hacer la búsqueda más rápida y no alertar a Google
+    cuota_maxima = 10 
     
-    try:
-        # Obtenemos las primeras 30 URLs de Google
-        resultados = search(query, num_results=30, lang="es")
-    except Exception as e:
-        log.error(f"❌ Error en Google Search: {e}")
-        sys.exit(1)
+    # Consultamos a Gemini por negocios reales
+    prospectos_ia = discover_leads_with_ia(query)
+    
+    if not prospectos_ia:
+        log.warning("⚠️ La IA no devolvió prospectos. Intentando con backup manual...")
+        return
 
-    for url_prospecto in resultados:
+    log.info(f"🧠 La IA encontró {len(prospectos_ia)} negocios potenciales en su base de datos.")
+
+    for p in prospectos_ia:
         if len(leads_frescos) >= cuota_maxima:
             break
             
-        # Filtramos directorios inservibles
-        if any(d in url_prospecto.lower() for d in ['facebook', 'instagram', 'yelp', 'seccionamarilla', 'foursquare', 'tiktok', 'youtube', 'mercadolibre']):
+        url_prospecto = p.get('web', '')
+        nombre_prospecto = p.get('nombre', 'Empresa')
+        
+        if not url_prospecto or "http" not in url_prospecto:
             continue
 
         dominio_puro = extraer_dominio_base(url_prospecto)
-        nombre_prospecto = dominio_puro.capitalize()
         
         # Evitar repetir envíos
         if dominio_puro in memoria_dominios:
+            log.info(f"  [-] Omitiendo {dominio_puro} (Ya contactado antes)")
             continue
 
-        log.info(f"  [+] Extrayendo contacto de: {nombre_prospecto} ({url_prospecto})")
+        log.info(f"  [+] Validando sitio web y correo de: {nombre_prospecto} ({url_prospecto})")
         correo_encontrado = scrape_email_from_web(url_prospecto)
 
         if correo_encontrado:
@@ -126,10 +166,11 @@ def main():
             leads_frescos.append({
                 "empresa": nombre_prospecto,
                 "web": url_prospecto,
-                "analisis_sector": "Automotriz y Refacciones en Saltillo",
+                "analisis_sector": p.get('sector', 'Automotriz'),
                 "email": correo_encontrado
             })
         else:
+            # Si no tiene correo, lo marcamos para no volver a intentar mañana con este dominio
             memoria_dominios.append(dominio_puro)
 
     # 4. Guardar resultados y memoria para el Dispatcher
