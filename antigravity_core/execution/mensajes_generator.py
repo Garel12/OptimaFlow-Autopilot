@@ -31,7 +31,7 @@ def init_gemini():
         sys.exit(1)
     genai.configure(api_key=api_key)
     # Recomendado modelo flash para velocidad y bajo costo
-    return genai.GenerativeModel('gemini-2.5-flash')
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 def generar_correo_con_ia(modelo, empresa, web, analisis):
     prompt = f"""
